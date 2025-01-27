@@ -1,0 +1,12 @@
+{
+  "name": "express_project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "nick",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@types/node": "^22.10.10",
+    "express": "^4.21.2"
+  }
+}
