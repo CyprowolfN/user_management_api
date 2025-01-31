@@ -1,7 +1,7 @@
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
 import user_data from "./data.json" assert { type: "json" };
-import fs from 'fs';
+import fs from "fs";
 
 const app = express();
 const port = 3000;
@@ -9,7 +9,7 @@ const port = 3000;
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-// Empty array to store data
+// Empty array to hold onto data
 let data = [];
 
 // Get all users
@@ -19,7 +19,7 @@ app.get("/users", (req, res) => {
   res.json(data);
 });
 
-// Get specific user by guid
+// Get user by guid
 app.get("/users/:guid", (req, res) => {
   const requested_guid = req.params.guid;
 
@@ -41,7 +41,7 @@ app.get("/users/:guid", (req, res) => {
 });
 
 // Delete user by guid
-app.delete("/users/:guid", (req, res) => {
+app.delete("/users/delete/:guid", (req, res) => {
   const requested_guid = req.params.guid;
 
   // Find the index of the user
@@ -55,15 +55,14 @@ app.delete("/users/:guid", (req, res) => {
 
   // If user is found
   if (userIndex !== -1) {
-    const deletedUser = user_data[userIndex];
+    const deleted_user = user_data[userIndex];
 
     // This is where we delete the user and then update the data.json file
     user_data.splice(userIndex, 1);
-    fs.writeFileSync('data.json', JSON.stringify(user_data, null, 2));
-
+    fs.writeFileSync("data.json", JSON.stringify(user_data, null, 2));
 
     // Send the deleted user data in response
-    res.json(deletedUser);
+    res.json(deleted_user);
     console.log(`User deleted: ${requested_guid}`);
   } else {
     // If user is not found
@@ -71,8 +70,8 @@ app.delete("/users/:guid", (req, res) => {
   }
 });
 
-// Post a new user
-app.post("/users/post", (req, res) => {
+// Create a new user
+app.post("/users/create", (req, res) => {
   const { name, phone, email } = req.body;
 
   // Generate a random GUID
@@ -88,8 +87,50 @@ app.post("/users/post", (req, res) => {
 
   user_data.push(newUser);
   res.status(201).json(newUser);
-  fs.writeFileSync('data.json', JSON.stringify(user_data, null, 2));
+  fs.writeFileSync("data.json", JSON.stringify(user_data, null, 2));
   console.log(`User added: ${guid}`);
+});
+
+// Edit a user
+app.put("/users/edit/:guid", (req, res) => {
+  const { guid, name, phone, email } = req.body;
+
+  // Is the guid equal to the user's guid?
+  const userIndex = user_data.findIndex((user) => {
+    if (user.guid === guid) {
+      console.log(`Found user: ${guid}`);
+      return true;
+    }
+    return false;
+  });
+  const updated_user = {
+    guid,
+    name,
+    phone,
+    email,
+  };
+
+  // If user is found
+  if (userIndex !== -1) {
+    const edited_user = user_data[userIndex];
+
+    // Remove the old user from user_data array
+    user_data.splice(userIndex, 1);
+
+    // Update user_data array with new user data
+    user_data.push(updated_user);
+
+    // write the updated user_data array to data.json file
+    fs.writeFileSync("data.json", JSON.stringify(user_data, null, 2));
+
+    // Send the edited_user data in response
+    res.json(edited_user);
+    console.log(`User edited: ${guid}`);
+  } else {
+    // If user is not found
+    console.log(`User not found: ${guid}`);
+    res.status(404).json({ message: "User not found" });
+  }
 });
 
 app.listen(port, () => {
